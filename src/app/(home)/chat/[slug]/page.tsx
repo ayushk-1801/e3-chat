@@ -29,13 +29,8 @@ export default async function ChatPage({ params }: ChatPageProps) {
     .orderBy(message.createdAt);
 
   return (
-    <div className="flex h-screen items-center justify-center">
+    <div className="flex h-[calc(100vh-5rem)] items-center justify-center">
       <div className="w-full max-w-4xl h-full flex flex-col">
-        <div className="mb-8 text-center">
-          <h1 className="mb-8 text-4xl font-bold text-secondary-foreground dark:text-white">
-            {chatData.title}
-          </h1>
-        </div>
         <ChatInterface chatId={slug} initialMessages={messages} />
       </div>
     </div>

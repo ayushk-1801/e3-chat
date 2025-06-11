@@ -50,8 +50,6 @@ interface ChatThread {
 
 // Mock data for chat threads - replace with actual data
 const allChats: ChatThread[] = [
-  { id: 1, title: "Greeting", url: "/chat/1" },
-  { id: 2, title: "What is Builder.ai", url: "/chat/2" }
 ];
 
 // Loading skeleton for chat threads

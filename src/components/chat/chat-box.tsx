@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSidebar } from "@/components/ui/sidebar";
-import { ArrowUp, Search, Paperclip, ChevronDown, Globe } from "lucide-react";
+import { ArrowUp, Search, Paperclip, ChevronDown, Globe, CornerRightUp } from "lucide-react";
 
 interface CreateChatResponse {
   chatId: string;
@@ -122,7 +122,7 @@ export function ChatBox() {
             size="icon"
             className="h-8 w-8 p-0 mr-2"
           >
-            <ArrowUp className="h-4 w-4" />
+            <CornerRightUp className="h-4 w-4" />
           </Button>
         </div>
       </div>

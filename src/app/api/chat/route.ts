@@ -1,87 +1,52 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { streamText } from "ai";
-import { NextRequest } from "next/server";
-import { env } from "@/env";
+import { google } from '@ai-sdk/google';
+import { streamText } from 'ai';
+import { db } from '@/server/db';
+import { chat, message } from '@/server/db/schema';
 
-// Initialize the Google provider with the API key
-const google = createGoogleGenerativeAI({
-  apiKey:
-    env.GOOGLE_GENERATIVE_AI_API_KEY ||
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
-    "",
-});
+// Allow streaming responses up to 30 seconds
+export const maxDuration = 30;
 
-export async function POST(req: NextRequest) {
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+interface RequestBody {
+  messages: ChatMessage[];
+  chatId?: string;
+}
+
+export async function POST(req: Request) {
   try {
-    const body: unknown = await req.json();
+    const body = await req.json() as RequestBody;
+    const { messages, chatId } = body;
 
-    if (!body || typeof body !== "object") {
-      return new Response("Invalid request body", {
-        status: 400,
-      });
+    // Validate messages
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response('Invalid messages format', { status: 400 });
     }
 
-    const { messages, model } = body as { messages?: unknown; model?: string };
-
-    // Validate that messages exist
-    if (!messages || !Array.isArray(messages)) {
-      return new Response("Messages are required and must be an array", {
-        status: 400,
-      });
+    // If chatId is provided, save user message to database
+    if (chatId && typeof chatId === 'string') {
+      const userMessage = messages[messages.length - 1];
+      if (userMessage && userMessage.role === 'user' && typeof userMessage.content === 'string') {
+        await db.insert(message).values({
+          chatId,
+          role: 'user',
+          content: userMessage.content,
+        });
+      }
     }
-
-    // Default to gemini-2.0-flash if no model is specified
-    const selectedModel = model ?? "gemini-2.0-flash";
-
-    // Validate model selection - updated with newer Gemini models
-    const allowedModels = [
-      "gemini-2.5-pro-preview-05-06",
-      "gemini-2.5-flash-preview-04-17",
-      "gemini-2.5-pro-exp-03-25",
-      "gemini-2.0-flash",
-    ] as const;
-
-    type AllowedModel = (typeof allowedModels)[number];
-
-    if (!allowedModels.includes(selectedModel as AllowedModel)) {
-      return new Response("Invalid model selection", {
-        status: 400,
-      });
-    }
-
-    console.log("Using model:", selectedModel);
-    console.log("Messages count:", messages.length);
 
     const result = streamText({
-      model: google(selectedModel as AllowedModel),
+      model: google('gemini-2.0-flash-exp'),
+      system: 'You are a helpful assistant. Provide clear, concise, and accurate responses.',
       messages,
-      maxTokens: 4096,
     });
 
     return result.toDataStreamResponse();
   } catch (error) {
-    console.error("Chat API error:", error);
-
-    // Return more detailed error information
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    const errorStack = error instanceof Error ? error.stack : "";
-
-    console.error("Error message:", errorMessage);
-    console.error("Error stack:", errorStack);
-
-    return new Response(
-      JSON.stringify({
-        error: "Internal server error",
-        details: errorMessage,
-        timestamp: new Date().toISOString(),
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    );
+    console.error('Chat API error:', error);
+    return new Response('Internal Server Error', { status: 500 });
   }
 }

@@ -2,7 +2,7 @@
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
 import { pgTableCreator } from "drizzle-orm/pg-core";
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, uuid, integer } from "drizzle-orm/pg-core";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -10,7 +10,6 @@ import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = pgTableCreator((name) => `e3-chat_${name}`);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -62,9 +61,28 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updated_at"),
 });
 
+// Chat-related tables
+export const chat = pgTable("chat", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const message = pgTable("message", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  chatId: uuid("chat_id").notNull().references(() => chat.id, { onDelete: "cascade" }),
+  role: text("role").notNull(), // 'user' or 'assistant'
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const schema = {
   user,
   session,
   account,
   verification,
+  chat,
+  message,
 };

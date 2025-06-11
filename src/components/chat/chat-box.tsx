@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,23 +14,50 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { ArrowUp, Search, Paperclip, ChevronDown, Globe } from "lucide-react";
 
+interface CreateChatResponse {
+  chatId: string;
+}
+
 export function ChatBox() {
   const [message, setMessage] = useState("");
   const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
+  const [isLoading, setIsLoading] = useState(false);
   const { state, isMobile } = useSidebar();
+  const router = useRouter();
 
-  const handleSend = () => {
-    if (message.trim()) {
-      // Handle sending message
-      console.log("Sending:", message);
-      setMessage("");
+  const handleSend = async () => {
+    if (message.trim() && !isLoading) {
+      setIsLoading(true);
+      try {
+        // Create a new chat
+        const createResponse = await fetch('/api/chat/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: message.slice(0, 50) + (message.length > 50 ? '...' : ''), // Use first 50 chars as title
+          }),
+        });
+
+        if (createResponse.ok) {
+          const data = await createResponse.json() as CreateChatResponse;
+          
+          // Navigate to the new chat page with the initial message
+          void router.push(`/chat/${data.chatId}?initialMessage=${encodeURIComponent(message)}`);
+        } else {
+          console.error('Failed to create chat');
+        }
+      } catch (error) {
+        console.error('Error creating chat:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      void handleSend();
     }
   };
 
@@ -51,6 +79,7 @@ export function ChatBox() {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Type your message here..."
+            disabled={isLoading}
             className="min-h-[50px] w-full text-base bg-transparent dark:bg-transparent outline-none border-none focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
@@ -88,8 +117,8 @@ export function ChatBox() {
 
           {/* Send Button */}
           <Button
-            onClick={handleSend}
-            disabled={!message.trim()}
+            onClick={() => void handleSend()}
+            disabled={!message.trim() || isLoading}
             size="icon"
             className="h-8 w-8 p-0 mr-2"
           >

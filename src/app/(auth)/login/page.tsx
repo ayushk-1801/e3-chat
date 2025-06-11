@@ -73,7 +73,7 @@ export default function LoginPage() {
             Sign in to your account to continue
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 text-3xl">
           <Button
             onClick={handleGoogleSignIn}
             disabled={googleLoading}

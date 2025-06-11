@@ -35,13 +35,23 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get("initialMessage");
+  const hasProcessedInitialMessage = useRef(false);
+
+  // For new chats with only one user message, don't use initialMessages
+  // Instead, we'll append it through useChat to trigger the proper response flow
+  const shouldUseInitialMessages = !(
+    initialMessages.length === 1 && 
+    initialMessages[0]?.role === "user"
+  );
 
   // Transform initial messages to the format expected by useChat
-  const transformedMessages = initialMessages.map((msg) => ({
-    id: msg.id,
-    role: msg.role,
-    content: msg.content,
-  }));
+  const transformedMessages = shouldUseInitialMessages 
+    ? initialMessages.map((msg) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+      }))
+    : [];
 
   const {
     messages,
@@ -75,24 +85,43 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle initial message from URL parameter
+  // Clear URL parameter if present (no longer needed since we handle initial messages via database)
   useEffect(() => {
-    if (initialMessage && messages.length === 0) {
+    if (initialMessage) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("initialMessage");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [initialMessage]);
+
+  // Handle case where we have a single initial user message that needs to be processed
+  useEffect(() => {
+    if (
+      !shouldUseInitialMessages &&
+      initialMessages.length === 1 &&
+      initialMessages[0]?.role === "user" &&
+      messages.length === 0 &&
+      !hasProcessedInitialMessage.current
+    ) {
+      // Mark as processed to prevent re-triggering
+      hasProcessedInitialMessage.current = true;
+      
+      // Append the initial message through useChat to trigger the response flow
       void append({
         role: "user",
-        content: initialMessage,
+        content: initialMessages[0].content,
       });
     }
-  }, [initialMessage, append, messages.length]);
+  }, [shouldUseInitialMessages, initialMessages, messages.length, append]);
 
   return (
     <div className="min-h-[calc(100vh-5rem)]">
       {/* Messages Area */}
-      <div className={`max-w-3xl space-y-4 p-4 pb-32 transition-all duration-200 ${
-        state === "expanded" && !isMobile 
-          ? "ml-[16rem] mx-auto" 
-          : "mx-auto"
-      }`}>
+      <div
+        className={`max-w-3xl space-y-4 p-4 pb-32 transition-all duration-200 ${
+          state === "expanded" && !isMobile ? "mx-auto ml-[16rem]" : "mx-auto"
+        }`}
+      >
         {messages.map((message) => (
           <div
             key={message.id}
@@ -126,12 +155,12 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
       </div>
 
       {/* Fixed Input Area */}
-      <div className="fixed bottom-0 left-0 right-0 z-5 ">
-        <div className={`max-w-3xl px-4 transition-all duration-200 ${
-          state === "expanded" && !isMobile 
-            ? "ml-[16rem] mx-auto" 
-            : "mx-auto"
-        }`}>
+      <div className="fixed right-0 bottom-0 left-0 z-5">
+        <div
+          className={`max-w-3xl px-4 transition-all duration-200 ${
+            state === "expanded" && !isMobile ? "mx-auto ml-[16rem]" : "mx-auto"
+          }`}
+        >
           <div
             className={`bg-background border-border flex w-full flex-col rounded-t-2xl border-t border-r border-l px-1.5 pt-1.5 transition-all duration-200 ease-linear`}
           >

@@ -5,6 +5,7 @@ import { GeistSans } from "geist/font/sans";
 
 import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "E3 Chat",
@@ -27,6 +28,7 @@ export default function RootLayout({
           <TRPCReactProvider>
             {children}
           </TRPCReactProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

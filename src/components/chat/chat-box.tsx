@@ -29,20 +29,21 @@ export function ChatBox() {
     if (message.trim() && !isLoading) {
       setIsLoading(true);
       try {
-        // Create a new chat
+        // Create a new chat with the initial message
         const createResponse = await fetch('/api/chat/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: message.slice(0, 50) + (message.length > 50 ? '...' : ''), // Use first 50 chars as title
+            initialMessage: message, // Send the message directly
           }),
         });
 
         if (createResponse.ok) {
           const data = await createResponse.json() as CreateChatResponse;
           
-          // Navigate to the new chat page with the initial message
-          void router.push(`/chat/${data.chatId}?initialMessage=${encodeURIComponent(message)}`);
+          // Navigate to the new chat page without URL parameters
+          void router.push(`/chat/${data.chatId}`);
         } else {
           console.error('Failed to create chat');
         }

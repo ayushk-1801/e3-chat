@@ -9,9 +9,7 @@ import {
   SidebarMenuButton,
   SidebarGroup,
   SidebarHeader,
-  SidebarGroupLabel,
   SidebarGroupContent,
-  SidebarSeparator,
   SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
@@ -22,11 +20,6 @@ import {
   User2, 
   ChevronUp, 
   Search, 
-  Plus, 
-  MessageSquare,
-  Calendar,
-  Home,
-  Inbox,
   Settings
 } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
@@ -38,19 +31,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Suspense } from "react";
+import { useState } from "react";
+import { useChats } from "@/hooks/use-chats";
 
 // Chat threads interface for type safety
 interface ChatThread {
-  id: string | number;
+  id: string;
   title: string;
   url?: string;
-  createdAt?: Date;
+  createdAt?: Date | string;
 }
-
-// Mock data for chat threads - replace with actual data
-const allChats: ChatThread[] = [
-];
 
 // Loading skeleton for chat threads
 function ChatThreadsSkeleton({ count = 3 }: { count?: number }) {
@@ -68,11 +58,43 @@ function ChatThreadsSkeleton({ count = 3 }: { count?: number }) {
 // Chat threads component
 function ChatThreads({ 
   threads, 
-  onChatSelect 
+  onChatSelect,
+  isLoading,
+  error
 }: { 
   threads: ChatThread[];
-  onChatSelect: (chatId: string | number) => void;
+  onChatSelect: (chatId: string) => void;
+  isLoading: boolean;
+  error: string | null;
 }) {
+  if (isLoading) {
+    return <ChatThreadsSkeleton count={5} />;
+  }
+
+  if (error) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <div className="px-2 py-4 text-sm text-muted-foreground text-center">
+            Failed to load chats
+          </div>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
+  if (threads.length === 0) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <div className="px-2 py-4 text-sm text-muted-foreground text-center">
+            No chats yet. Start a new conversation!
+          </div>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
   return (
     <SidebarMenu>
       {threads.map((chat) => (
@@ -89,16 +111,50 @@ function ChatThreads({
   );
 }
 
+// Search component for filtering chats
+function ChatSearch({ 
+  searchQuery, 
+  onSearchChange 
+}: { 
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+}) {
+  return (
+    <div className="px-4 pb-4">
+      <div className="relative">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input 
+          placeholder="Search your threads..."
+          className="pl-8"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function AppSidebar() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { chats, isLoading, error, refetch } = useChats();
+  const [searchQuery, setSearchQuery] = useState("");
   
-  const handleChatSelect = (chatId: string | number) => {
+  // Filter chats based on search query
+  const filteredChats = chats.filter(chat =>
+    chat.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleChatSelect = (chatId: string) => {
     router.push(`/chat/${chatId}`);
   };
 
   const handleNewChat = () => {
     router.push("/");
+    // Refetch chats when returning from a new chat
+    setTimeout(() => {
+      void refetch();
+    }, 1000);
   };
   
   return (
@@ -122,27 +178,22 @@ export function AppSidebar() {
         </div>
         
         {/* Search Bar */}
-        <div className="px-4 pb-4">
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search your threads..."
-              className="pl-8"
-            />
-          </div>
-        </div>
+        <ChatSearch 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
       </SidebarHeader>
       
       <SidebarContent className="gap-0 overflow-hidden">
         {/* All Chats Section */}
         <SidebarGroup>
           <SidebarGroupContent className="px-2 overflow-hidden">
-            <Suspense fallback={<ChatThreadsSkeleton count={2} />}>
-              <ChatThreads 
-                threads={allChats}
-                onChatSelect={handleChatSelect}
-              />
-            </Suspense>
+            <ChatThreads 
+              threads={filteredChats}
+              onChatSelect={handleChatSelect}
+              isLoading={isLoading}
+              error={error}
+            />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

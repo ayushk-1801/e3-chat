@@ -6,7 +6,7 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { Copy, Download, WrapText } from "lucide-react";
+import { Copy, Download, WrapText, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import React, { useState, useRef, useEffect } from "react";
@@ -26,19 +26,21 @@ function CodeBlock({ children, className }: CodeBlockProps) {
   // Extract language from className, handling both "language-xxx" and "hljs language-xxx" patterns
   const extractLanguage = (className?: string) => {
     if (!className) return "text";
-    const match = className.match(/language-(\w+)/);
+    const regex = /language-(\w+)/;
+    const match = regex.exec(className);
     return match ? match[1] : "text";
   };
   const language = extractLanguage(className);
   
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false);
   const [codeContent, setCodeContent] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
   const codeRef = useRef<HTMLDivElement>(null);
   
   // Extract text content from the DOM after rendering
   useEffect(() => {
     if (codeRef.current) {
-      const textContent = codeRef.current.textContent || codeRef.current.innerText || '';
+      const textContent = codeRef.current.textContent ?? codeRef.current.innerText ?? '';
       setCodeContent(textContent.replace(/\n$/, ""));
     }
   }, [children]);
@@ -46,7 +48,10 @@ function CodeBlock({ children, className }: CodeBlockProps) {
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(codeContent);
-      toast.success("Code copied to clipboard!");
+      setIsCopied(true);
+      toast.success("Copied to clipboard!");
+      // Reset the checkmark after 2 seconds
+      setTimeout(() => setIsCopied(false), 2000);
     } catch (error) {
       toast.error("Failed to copy code");
     }
@@ -100,10 +105,16 @@ function CodeBlock({ children, className }: CodeBlockProps) {
             variant="ghost"
             size="sm"
             onClick={copyToClipboard}
-            className="h-7 w-7 rounded p-0 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            title="Copy code"
+            className={`h-7 w-7 rounded p-0 transition-colors hover:bg-accent hover:text-accent-foreground ${
+              isCopied ? 'text-green-500' : 'text-muted-foreground'
+            }`}
+            title={isCopied ? "Copied!" : "Copy code"}
           >
-            <Copy className="h-3.5 w-3.5" />
+            {isCopied ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
           </Button>
         </div>
       </div>

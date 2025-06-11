@@ -1,6 +1,82 @@
-# Create T3 App
+# E3 Chat
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app` with Better Auth integration for social authentication.
+
+## Features
+
+- **Authentication**: Social login with Google, GitHub, and Discord using Better Auth
+- **AI Chat**: Powered by Google Generative AI
+- **Database**: PostgreSQL with Drizzle ORM
+- **UI**: Beautiful components using shadcn/ui
+- **Type Safety**: Full-stack TypeScript
+
+## Environment Variables
+
+Create a `.env` file with the following variables:
+
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/db"
+
+# Auth
+BETTER_AUTH_SECRET="your-better-auth-secret-here"
+NEXT_PUBLIC_BETTER_AUTH_URL="http://localhost:3000"
+
+# Google OAuth
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# GitHub OAuth
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+
+# Discord OAuth
+DISCORD_CLIENT_ID="your-discord-client-id"
+DISCORD_CLIENT_SECRET="your-discord-client-secret"
+
+# AI
+GOOGLE_GENERATIVE_AI_API_KEY="your-google-ai-api-key"
+```
+
+## Authentication Setup
+
+### Google OAuth
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+
+### GitHub OAuth
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Create a new OAuth App
+3. Set Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
+4. Copy Client ID and Client Secret
+
+### Discord OAuth
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Create a new application
+3. Go to OAuth2 settings
+4. Add redirect URI: `http://localhost:3000/api/auth/callback/discord`
+5. Copy Client ID and Client Secret
+
+## Getting Started
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Set up the database:
+```bash
+npm run docker:up
+npm run db:push
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
 
 ## What's next? How do I make an app with this?
 
@@ -9,8 +85,7 @@ We try to keep this project as simple as possible, so you can start with just th
 If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
 
 - [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
+- [Better Auth](https://better-auth.com)
 - [Drizzle](https://orm.drizzle.team)
 - [Tailwind CSS](https://tailwindcss.com)
 - [tRPC](https://trpc.io)

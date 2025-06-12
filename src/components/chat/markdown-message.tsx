@@ -5,12 +5,342 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Copy, Download, WrapText, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import React, { useState, useRef, useEffect } from "react";
+import { useTheme } from "next-themes";
 import "highlight.js/styles/github-dark.css";
+
+// Catppuccin Mocha theme for dark mode
+const catppuccinMochaTheme: Record<string, React.CSSProperties> = {
+  'code[class*="language-"]': {
+    background: "#1e1e2e", // Catppuccin Mocha base
+    color: "#cdd6f4", // Catppuccin Mocha text
+    fontFamily:
+      'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+    textAlign: "left" as const,
+    whiteSpace: "pre" as const,
+    wordSpacing: "normal" as const,
+    wordBreak: "normal" as const,
+    wordWrap: "normal" as const,
+    lineHeight: "1.5",
+    WebkitHyphens: "none" as const,
+    hyphens: "none" as const,
+  },
+  'pre[class*="language-"]': {
+    background: "#1e1e2e",
+    color: "#cdd6f4",
+    fontFamily:
+      'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+    textAlign: "left" as const,
+    whiteSpace: "pre" as const,
+    wordSpacing: "normal" as const,
+    wordBreak: "normal" as const,
+    wordWrap: "normal" as const,
+    lineHeight: "1.5",
+    WebkitHyphens: "none" as const,
+    hyphens: "none" as const,
+    padding: "1em",
+    margin: "0.5em 0",
+    overflow: "auto" as const,
+  },
+  comment: {
+    color: "#6c7086", // Catppuccin Mocha overlay0
+    fontStyle: "italic" as const,
+  },
+  prolog: {
+    color: "#6c7086",
+  },
+  doctype: {
+    color: "#6c7086",
+  },
+  cdata: {
+    color: "#6c7086",
+  },
+  punctuation: {
+    color: "#bac2de", // Catppuccin Mocha subtext1
+  },
+  namespace: {
+    opacity: 0.7,
+  },
+  property: {
+    color: "#f38ba8", // Catppuccin Mocha red
+  },
+  tag: {
+    color: "#f38ba8",
+  },
+  constant: {
+    color: "#f38ba8",
+  },
+  symbol: {
+    color: "#f38ba8",
+  },
+  deleted: {
+    color: "#f38ba8",
+  },
+  boolean: {
+    color: "#fab387", // Catppuccin Mocha peach
+  },
+  number: {
+    color: "#fab387",
+  },
+  selector: {
+    color: "#a6e3a1", // Catppuccin Mocha green
+  },
+  "attr-name": {
+    color: "#a6e3a1",
+  },
+  string: {
+    color: "#a6e3a1",
+  },
+  char: {
+    color: "#a6e3a1",
+  },
+  builtin: {
+    color: "#a6e3a1",
+  },
+  inserted: {
+    color: "#a6e3a1",
+  },
+  operator: {
+    color: "#89dceb", // Catppuccin Mocha sky
+  },
+  entity: {
+    color: "#89dceb",
+    cursor: "help" as const,
+  },
+  url: {
+    color: "#89dceb",
+  },
+  ".language-css .token.string": {
+    color: "#89dceb",
+  },
+  ".style .token.string": {
+    color: "#89dceb",
+  },
+  atrule: {
+    color: "#f9e2af", // Catppuccin Mocha yellow
+  },
+  "attr-value": {
+    color: "#f9e2af",
+  },
+  function: {
+    color: "#89b4fa", // Catppuccin Mocha blue
+  },
+  "class-name": {
+    color: "#89b4fa",
+  },
+  keyword: {
+    color: "#cba6f7", // Catppuccin Mocha mauve
+  },
+  regex: {
+    color: "#f5c2e7", // Catppuccin Mocha pink
+  },
+  important: {
+    color: "#f5c2e7",
+    fontWeight: "bold" as const,
+  },
+  variable: {
+    color: "#f5c2e7",
+  },
+  bold: {
+    fontWeight: "bold" as const,
+  },
+  italic: {
+    fontStyle: "italic" as const,
+  },
+  // Additional tokens for better C++ support
+  "type-class-name": {
+    color: "#89b4fa", // Catppuccin Mocha blue
+  },
+  generic: {
+    color: "#89b4fa",
+  },
+  "function-definition": {
+    color: "#89b4fa",
+  },
+  parameter: {
+    color: "#cdd6f4",
+  },
+  directive: {
+    color: "#f5c2e7", // Catppuccin Mocha pink
+  },
+  "directive-hash": {
+    color: "#f5c2e7",
+  },
+  macro: {
+    color: "#fab387", // Catppuccin Mocha peach
+  },
+  "cpp-include": {
+    color: "#f5c2e7",
+  },
+};
+
+// Catppuccin Latte theme for light mode
+const catppuccinLatteTheme: Record<string, React.CSSProperties> = {
+  'code[class*="language-"]': {
+    background: "#eff1f5", // Catppuccin Latte base
+    color: "#4c4f69", // Catppuccin Latte text
+    fontFamily:
+      'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+    textAlign: "left" as const,
+    whiteSpace: "pre" as const,
+    wordSpacing: "normal" as const,
+    wordBreak: "normal" as const,
+    wordWrap: "normal" as const,
+    lineHeight: "1.5",
+    WebkitHyphens: "none" as const,
+    hyphens: "none" as const,
+  },
+  'pre[class*="language-"]': {
+    background: "#eff1f5",
+    color: "#4c4f69",
+    fontFamily:
+      'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+    textAlign: "left" as const,
+    whiteSpace: "pre" as const,
+    wordSpacing: "normal" as const,
+    wordBreak: "normal" as const,
+    wordWrap: "normal" as const,
+    lineHeight: "1.5",
+    WebkitHyphens: "none" as const,
+    hyphens: "none" as const,
+    padding: "1em",
+    margin: "0.5em 0",
+    overflow: "auto" as const,
+  },
+  comment: {
+    color: "#8c8fa1", // Catppuccin Latte overlay1
+    fontStyle: "italic" as const,
+  },
+  prolog: {
+    color: "#8c8fa1",
+  },
+  doctype: {
+    color: "#8c8fa1",
+  },
+  cdata: {
+    color: "#8c8fa1",
+  },
+  punctuation: {
+    color: "#5c5f77", // Catppuccin Latte subtext1
+  },
+  namespace: {
+    opacity: 0.7,
+  },
+  property: {
+    color: "#d20f39", // Catppuccin Latte red
+  },
+  tag: {
+    color: "#d20f39",
+  },
+  constant: {
+    color: "#d20f39",
+  },
+  symbol: {
+    color: "#d20f39",
+  },
+  deleted: {
+    color: "#d20f39",
+  },
+  boolean: {
+    color: "#fe640b", // Catppuccin Latte peach
+  },
+  number: {
+    color: "#fe640b",
+  },
+  selector: {
+    color: "#40a02b", // Catppuccin Latte green
+  },
+  "attr-name": {
+    color: "#40a02b",
+  },
+  string: {
+    color: "#40a02b",
+  },
+  char: {
+    color: "#40a02b",
+  },
+  builtin: {
+    color: "#40a02b",
+  },
+  inserted: {
+    color: "#40a02b",
+  },
+  operator: {
+    color: "#04a5e5", // Catppuccin Latte sky
+  },
+  entity: {
+    color: "#04a5e5",
+    cursor: "help" as const,
+  },
+  url: {
+    color: "#04a5e5",
+  },
+  ".language-css .token.string": {
+    color: "#04a5e5",
+  },
+  ".style .token.string": {
+    color: "#04a5e5",
+  },
+  atrule: {
+    color: "#df8e1d", // Catppuccin Latte yellow
+  },
+  "attr-value": {
+    color: "#df8e1d",
+  },
+  function: {
+    color: "#1e66f5", // Catppuccin Latte blue
+  },
+  "class-name": {
+    color: "#1e66f5",
+  },
+  keyword: {
+    color: "#8839ef", // Catppuccin Latte mauve
+  },
+  regex: {
+    color: "#ea76cb", // Catppuccin Latte pink
+  },
+  important: {
+    color: "#ea76cb",
+    fontWeight: "bold" as const,
+  },
+  variable: {
+    color: "#ea76cb",
+  },
+  bold: {
+    fontWeight: "bold" as const,
+  },
+  italic: {
+    fontStyle: "italic" as const,
+  },
+  // Additional tokens for better C++ support
+  "type-class-name": {
+    color: "#1e66f5", // Catppuccin Latte blue
+  },
+  generic: {
+    color: "#1e66f5",
+  },
+  "function-definition": {
+    color: "#1e66f5",
+  },
+  parameter: {
+    color: "#4c4f69",
+  },
+  directive: {
+    color: "#ea76cb", // Catppuccin Latte pink
+  },
+  "directive-hash": {
+    color: "#ea76cb",
+  },
+  macro: {
+    color: "#fe640b", // Catppuccin Latte peach
+  },
+  "cpp-include": {
+    color: "#ea76cb",
+  },
+};
 
 interface MarkdownMessageProps {
   content: string;
@@ -23,27 +353,83 @@ interface CodeBlockProps {
 }
 
 function CodeBlock({ children, className }: CodeBlockProps) {
+  const { theme, resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
+  // Select the appropriate theme based on the current mode
+  const catppuccinTheme = isDark ? catppuccinMochaTheme : catppuccinLatteTheme;
+  const backgroundColor = isDark ? "#1e1e2e" : "#eff1f5";
+  const textColor = isDark ? "#cdd6f4" : "#4c4f69";
+
   // Extract language from className, handling both "language-xxx" and "hljs language-xxx" patterns
   const extractLanguage = (className?: string) => {
     if (!className) return "text";
     const regex = /language-(\w+)/;
     const match = regex.exec(className);
-    return match ? match[1] : "text";
+    const lang = match ? match[1] : "text";
+
+    // Map common language aliases to supported languages
+    const languageMap: Record<string, string> = {
+      cpp: "cpp",
+      "c++": "cpp",
+      cxx: "cpp",
+      cc: "cpp",
+      javascript: "javascript",
+      js: "javascript",
+      typescript: "typescript",
+      ts: "typescript",
+      python: "python",
+      py: "python",
+      java: "java",
+      c: "c",
+      csharp: "csharp",
+      cs: "csharp",
+      php: "php",
+      ruby: "ruby",
+      go: "go",
+      rust: "rust",
+      swift: "swift",
+      kotlin: "kotlin",
+      scala: "scala",
+      bash: "bash",
+      shell: "bash",
+      sh: "bash",
+      json: "json",
+      xml: "xml",
+      html: "markup",
+      css: "css",
+      sql: "sql",
+      yaml: "yaml",
+      yml: "yaml",
+      markdown: "markdown",
+      md: "markdown",
+    };
+
+    const mappedLang = languageMap[lang?.toLowerCase() ?? ""] ?? lang ?? "text";
+    console.log(
+      `Language detection: className="${className}", extracted="${lang}", mapped="${mappedLang}", theme="${resolvedTheme}"`,
+    );
+    return mappedLang;
   };
   const language = extractLanguage(className);
-  
+
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false);
-  const [codeContent, setCodeContent] = useState('');
+  const [codeContent, setCodeContent] = useState("");
   const [isCopied, setIsCopied] = useState(false);
   const codeRef = useRef<HTMLDivElement>(null);
-  
+
   // Extract text content from the DOM after rendering
   useEffect(() => {
     if (codeRef.current) {
-      const textContent = codeRef.current.textContent ?? codeRef.current.innerText ?? '';
+      const textContent =
+        codeRef.current.textContent ?? codeRef.current.innerText ?? "";
       setCodeContent(textContent.replace(/\n$/, ""));
+      console.log(
+        `Code content extracted for language "${language}":`,
+        textContent.slice(0, 100) + "...",
+      );
     }
-  }, [children]);
+  }, [children, language]);
 
   const copyToClipboard = async () => {
     try {
@@ -74,10 +460,10 @@ function CodeBlock({ children, className }: CodeBlockProps) {
   };
 
   return (
-    <div className="relative mb-4 overflow-hidden rounded-lg border border-border bg-card">
+    <div className="border-border bg-card relative mb-4 overflow-hidden rounded-lg border">
       {/* Top Header Strip */}
-      <div className="flex items-center justify-between border-b border-border bg-muted/50 px-4 py-1">
-        <span className="text-sm font-medium text-muted-foreground select-none">
+      <div className="border-border bg-muted/50 flex items-center justify-between border-b px-4 py-1">
+        <span className="text-muted-foreground text-sm font-medium select-none">
           {language}
         </span>
         <div className="flex items-center space-x-1">
@@ -85,28 +471,28 @@ function CodeBlock({ children, className }: CodeBlockProps) {
             variant="ghost"
             size="sm"
             onClick={downloadCode}
-            className="h-7 w-7 rounded p-0 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 rounded p-0 transition-colors"
             title="Download code"
           >
             <Download className="h-3.5 w-3.5" />
           </Button>
-                      <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleWordWrap}
-              className={`h-7 w-7 rounded p-0 transition-colors hover:bg-accent hover:text-accent-foreground ${
-                isWordWrapEnabled ? 'text-primary' : 'text-muted-foreground'
-              }`}
-              title={isWordWrapEnabled ? "Disable word wrap" : "Enable word wrap"}
-            >
-              <WrapText className="h-3.5 w-3.5" />
-            </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleWordWrap}
+            className={`hover:bg-accent hover:text-accent-foreground h-7 w-7 rounded p-0 transition-colors ${
+              isWordWrapEnabled ? "text-primary" : "text-muted-foreground"
+            }`}
+            title={isWordWrapEnabled ? "Disable word wrap" : "Enable word wrap"}
+          >
+            <WrapText className="h-3.5 w-3.5" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={copyToClipboard}
-            className={`h-7 w-7 rounded p-0 transition-colors hover:bg-accent hover:text-accent-foreground ${
-              isCopied ? 'text-green-500' : 'text-muted-foreground'
+            className={`hover:bg-accent hover:text-accent-foreground h-7 w-7 rounded p-0 transition-colors ${
+              isCopied ? "text-green-500" : "text-muted-foreground"
             }`}
             title={isCopied ? "Copied!" : "Copy code"}
           >
@@ -119,21 +505,21 @@ function CodeBlock({ children, className }: CodeBlockProps) {
         </div>
       </div>
       {/* Code content */}
-      <div className="bg-gray-900">
+      <div className="bg-sidebar">
         {/* Hidden div to extract text content */}
-        <div ref={codeRef} style={{ display: 'none' }}>
+        <div ref={codeRef} style={{ display: "none" }}>
           {children}
         </div>
         <SyntaxHighlighter
           language={language}
-          style={oneDark}
+          style={catppuccinTheme}
           customStyle={{
             margin: 0,
             padding: "1rem",
             background: "transparent",
             fontSize: "0.875rem",
             lineHeight: "1.5",
-            color: "#e5e7eb", // Ensure proper text color
+            color: textColor,
           }}
           codeTagProps={{
             style: {
@@ -144,7 +530,7 @@ function CodeBlock({ children, className }: CodeBlockProps) {
               border: "none",
               outline: "none",
               boxShadow: "none",
-            }
+            },
           }}
           showLineNumbers={false}
           wrapLines={isWordWrapEnabled}
@@ -193,14 +579,16 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
 
           // Lists
           ul: ({ children }) => (
-            <ul className="mb-4 list-inside list-disc space-y-1">{children}</ul>
+            <ul className="mb-4 ml-8 list-outside list-disc space-y-1">
+              {children}
+            </ul>
           ),
           ol: ({ children }) => (
-            <ol className="mb-4 list-inside list-decimal space-y-1">
+            <ol className="mb-4 ml-8 list-outside list-decimal space-y-1">
               {children}
             </ol>
           ),
-          li: ({ children }) => <li className="ml-4">{children}</li>,
+          li: ({ children }) => <li className="pl-2">{children}</li>,
 
           // Code blocks - intercept at code level for better detection
           pre: ({ children, ...props }) => {
@@ -219,13 +607,13 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
 
             // Check if this is a language-specific code block
             // Handle both "language-xxx" and "hljs language-xxx" patterns
-            if (className && (className.startsWith("language-") || className.includes("language-"))) {
+            if (
+              className &&
+              (className.startsWith("language-") ||
+                className.includes("language-"))
+            ) {
               console.log("Rendering CodeBlock with className:", className);
-              return (
-                <CodeBlock className={className}>
-                  {children}
-                </CodeBlock>
-              );
+              return <CodeBlock className={className}>{children}</CodeBlock>;
             }
 
             // Fallback for other code

@@ -16,6 +16,7 @@ import { ArrowUp, Search, Paperclip, Globe, CornerRightUp } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { MarkdownMessage } from "./markdown-message";
+import { MessageNavigation } from "./message-navigation";
 
 interface ChatMessage {
   id: string;
@@ -33,6 +34,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
   const { state, isMobile } = useSidebar();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get("initialMessage");
   const hasProcessedInitialMessage = useRef(false);
@@ -114,18 +116,41 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
     }
   }, [shouldUseInitialMessages, initialMessages, messages.length, append]);
 
+  // Function to scroll to a specific message
+  const scrollToMessage = (messageId: string) => {
+    const messageElement = messageRefs.current.get(messageId);
+    if (messageElement) {
+      messageElement.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "center" 
+      });
+      // Add a highlight effect
+      messageElement.classList.add("bg-accent/20");
+      setTimeout(() => {
+        messageElement.classList.remove("bg-accent/20");
+      }, 2000);
+    }
+  };
+
   return (
     <div className="min-h-[calc(100vh-5rem)]">
+      {/* Message Navigation */}
+      <MessageNavigation 
+        messages={messages}
+        onMessageClick={scrollToMessage}
+      />
+      
       {/* Messages Area */}
       <div
         className={`max-w-3xl space-y-4 p-4 pb-32 transition-all duration-200 ${
-          state === "expanded" && !isMobile ? "mx-auto ml-[16rem]" : "mx-auto"
+          state === "expanded" && !isMobile ? "mx-auto" : "mx-auto"
         }`}
       >
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${
+            ref={(el) => { messageRefs.current.set(message.id, el); }}
+            className={`flex transition-colors duration-500 ${
               message.role === "user" ? "justify-end" : "justify-start"
             }`}
           >
@@ -155,10 +180,10 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
       </div>
 
       {/* Fixed Input Area */}
-      <div className="fixed right-0 bottom-0 left-0 z-5">
+      <div className="sticky right-0 bottom-0 left-0 z-1">
         <div
           className={`max-w-3xl px-4 transition-all duration-200 ${
-            state === "expanded" && !isMobile ? "mx-auto ml-[16rem]" : "mx-auto"
+            state === "expanded" && !isMobile ? "mx-auto" : "mx-auto"
           }`}
         >
           <div

@@ -12,7 +12,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSidebar } from "@/components/ui/sidebar";
-import { ArrowUp, Search, Paperclip, ChevronDown, Globe, CornerRightUp } from "lucide-react";
+import {
+  ArrowUp,
+  Search,
+  Paperclip,
+  ChevronDown,
+  Globe,
+  CornerRightUp,
+} from "lucide-react";
+import GlowButton from "../ui/glow-button";
 
 interface CreateChatResponse {
   chatId: string;
@@ -30,25 +38,25 @@ export function ChatBox() {
       setIsLoading(true);
       try {
         // Create a new chat with the initial message
-        const createResponse = await fetch('/api/chat/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const createResponse = await fetch("/api/chat/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title: message.slice(0, 50) + (message.length > 50 ? '...' : ''), // Use first 50 chars as title
+            title: message.slice(0, 50) + (message.length > 50 ? "..." : ""), // Use first 50 chars as title
             initialMessage: message, // Send the message directly
           }),
         });
 
         if (createResponse.ok) {
-          const data = await createResponse.json() as CreateChatResponse;
-          
+          const data = (await createResponse.json()) as CreateChatResponse;
+
           // Navigate to the new chat page without URL parameters
           void router.push(`/chat/${data.chatId}`);
         } else {
-          console.error('Failed to create chat');
+          console.error("Failed to create chat");
         }
       } catch (error) {
-        console.error('Error creating chat:', error);
+        console.error("Error creating chat:", error);
       } finally {
         setIsLoading(false);
       }
@@ -81,7 +89,7 @@ export function ChatBox() {
             onKeyDown={handleKeyPress}
             placeholder="Type your message here..."
             disabled={isLoading}
-            className="min-h-[50px] w-full text-base bg-transparent dark:bg-transparent outline-none border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="min-h-[50px] w-full border-none bg-transparent text-base outline-none focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-transparent"
           />
         </div>
 
@@ -90,7 +98,7 @@ export function ChatBox() {
           <div className="flex items-center space-x-2">
             {/* Model Selector */}
             <Select value={selectedModel} onValueChange={setSelectedModel}>
-              <SelectTrigger className="w-auto bg-transparent dark:bg-transparent border-none ml-1">
+              <SelectTrigger className="ml-1 w-auto border-none bg-transparent dark:bg-transparent">
                 <div className="flex items-center space-x-2">
                   <SelectValue />
                 </div>
@@ -105,13 +113,21 @@ export function ChatBox() {
             </Select>
 
             {/* Search Button */}
-            <Button variant="outline" size="sm" className="bg-transparent dark:bg-transparent rounded-full">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full bg-transparent dark:bg-transparent"
+            >
               <Globe className="mr-1 h-4 w-4" />
               Search
             </Button>
 
             {/* Attachment Button */}
-            <Button variant="outline" size="sm" className="bg-transparent dark:bg-transparent rounded-full">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full bg-transparent dark:bg-transparent"
+            >
               <Paperclip className="h-4 w-4" />
             </Button>
           </div>
@@ -121,7 +137,7 @@ export function ChatBox() {
             onClick={() => void handleSend()}
             disabled={!message.trim() || isLoading}
             size="icon"
-            className="h-8 w-8 p-0 mr-2"
+            className="mr-2 h-8 w-8 p-0"
           >
             <CornerRightUp className="h-4 w-4" />
           </Button>

@@ -13,6 +13,7 @@ interface UseChatsReturn {
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  deleteChat: (chatId: string) => Promise<void>;
 }
 
 export function useChats(): UseChatsReturn {
@@ -38,8 +39,8 @@ export function useChats(): UseChatsReturn {
         throw new Error('Failed to fetch chats');
       }
 
-      const data = await response.json();
-      setChats(data.chats || []);
+      const data = await response.json() as { chats: Chat[] };
+      setChats(data.chats ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setChats([]);
@@ -48,8 +49,27 @@ export function useChats(): UseChatsReturn {
     }
   };
 
+  const deleteChat = async (chatId: string) => {
+    try {
+      const response = await fetch(`/api/chat/${chatId}/delete`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete chat');
+      }
+
+      // Remove the chat from local state immediately
+      setChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete chat');
+      // Optionally refetch to ensure state consistency
+      void fetchChats();
+    }
+  };
+
   useEffect(() => {
-    fetchChats();
+    void fetchChats();
   }, [session?.user?.id]);
 
   return {
@@ -57,5 +77,6 @@ export function useChats(): UseChatsReturn {
     isLoading,
     error,
     refetch: fetchChats,
+    deleteChat,
   };
 } 

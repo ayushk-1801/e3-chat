@@ -133,7 +133,7 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-5rem)]">
+    <div className="min-h-screen">
       {/* Message Navigation */}
       <MessageNavigation 
         messages={messages}
@@ -142,7 +142,7 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
       
       {/* Messages Area */}
       <div
-        className={`max-w-3xl space-y-4 p-4 pb-32 transition-all duration-200 ${
+        className={`max-w-3xl space-y-4 p-4 pb-32 transition-all duration-200 min-h-screen ${
           state === "expanded" && !isMobile ? "mx-auto" : "mx-auto"
         }`}
       >

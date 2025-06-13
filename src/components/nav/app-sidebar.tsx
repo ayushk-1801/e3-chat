@@ -11,16 +11,20 @@ import {
   SidebarHeader,
   SidebarGroupContent,
   SidebarMenuSkeleton,
+  SidebarGroupLabel,
+  SidebarMenuAction,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { 
-  LogInIcon, 
-  UserIcon, 
-  User2, 
-  ChevronUp, 
-  Search, 
-  Settings
+import {
+  LogInIcon,
+  UserIcon,
+  User2,
+  ChevronUp,
+  Search,
+  Settings,
+  Trash2,
 } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,6 +35,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { useChats } from "@/hooks/use-chats";
 
@@ -56,14 +71,16 @@ function ChatThreadsSkeleton({ count = 3 }: { count?: number }) {
 }
 
 // Chat threads component
-function ChatThreads({ 
-  threads, 
+function ChatThreads({
+  threads,
   onChatSelect,
+  onChatDelete,
   isLoading,
-  error
-}: { 
+  error,
+}: {
   threads: ChatThread[];
   onChatSelect: (chatId: string) => void;
+  onChatDelete: (chatId: string) => void;
   isLoading: boolean;
   error: string | null;
 }) {
@@ -75,9 +92,11 @@ function ChatThreads({
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-            Failed to load chats
-          </div>
+          <SidebarMenuButton disabled>
+            <span className="text-muted-foreground text-sm">
+              Failed to load chats
+            </span>
+          </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
     );
@@ -87,9 +106,11 @@ function ChatThreads({
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-            No chats yet. Start a new conversation!
-          </div>
+          <SidebarMenuButton disabled>
+            <span className="text-muted-foreground text-sm">
+              No chats yet. Start a new conversation!
+            </span>
+          </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
     );
@@ -98,13 +119,42 @@ function ChatThreads({
   return (
     <SidebarMenu>
       {threads.map((chat) => (
-        <SidebarMenuItem key={chat.id}>
-          <SidebarMenuButton 
-            className="justify-start h-8 px-2 overflow-hidden"
+        <SidebarMenuItem key={chat.id} className="group/menu-item">
+          <SidebarMenuButton
+            className="justify-start"
             onClick={() => onChatSelect(chat.id)}
           >
-            <span className="truncate text-sm overflow-hidden">{chat.title}</span>
+            <span className="truncate text-sm">{chat.title}</span>
           </SidebarMenuButton>
+
+          {/* Delete button with confirmation dialog - shows on hover */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <SidebarMenuAction className="opacity-0 transition-opacity duration-200 group-hover/menu-item:opacity-100 hover:bg-destructive/10">
+                <Trash2 className="h-3 w-3" />
+                <span className="sr-only">Delete chat</span>
+              </SidebarMenuAction>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Chat</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete &ldquo;{chat.title}&rdquo;?
+                  This action cannot be undone and will permanently delete the
+                  chat and all its messages.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className=""
+                  onClick={() => onChatDelete(chat.id)}
+                >
+                  Delete Chat
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </SidebarMenuItem>
       ))}
     </SidebarMenu>
@@ -112,41 +162,55 @@ function ChatThreads({
 }
 
 // Search component for filtering chats
-function ChatSearch({ 
-  searchQuery, 
-  onSearchChange 
-}: { 
+function ChatSearch({
+  searchQuery,
+  onSearchChange,
+}: {
   searchQuery: string;
   onSearchChange: (query: string) => void;
 }) {
   return (
-    <div className="px-4 pb-4">
-      <div className="relative">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input 
+    <SidebarGroup>
+      <SidebarGroupContent className="relative">
+        <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4 z-10" />
+        <Input
           placeholder="Search your threads..."
           className="pl-8"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
         />
-      </div>
-    </div>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 }
 
 export function AppSidebar() {
   const { data: session } = useSession();
   const router = useRouter();
-  const { chats, isLoading, error, refetch } = useChats();
+  const { chats, isLoading, error, refetch, deleteChat } = useChats();
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Filter chats based on search query
-  const filteredChats = chats.filter(chat =>
-    chat.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredChats = chats.filter((chat) =>
+    chat.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleChatSelect = (chatId: string) => {
     router.push(`/chat/${chatId}`);
+  };
+
+  const handleChatDelete = async (chatId: string) => {
+    try {
+      await deleteChat(chatId);
+
+      // If the user is currently viewing the deleted chat, redirect to home
+      const currentPath = window.location.pathname;
+      if (currentPath === `/chat/${chatId}`) {
+        router.push("/");
+      }
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+    }
   };
 
   const handleNewChat = () => {
@@ -156,49 +220,57 @@ export function AppSidebar() {
       void refetch();
     }, 1000);
   };
-  
+
   return (
     <Sidebar className="border-r">
-      <SidebarHeader className="border-b">
-        <div className="flex items-center gap-2 px-4 py-2">
-          <div className="flex flex-col gap-0.5">
-            <h1 className="text-lg font-semibold">E3.chat</h1>
-          </div>
-        </div>
-        
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              size="lg"
+              className="justify-center font-semibold text-lg"
+              disabled
+            >
+              E3.chat
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+
+
         {/* New Chat Button */}
-        <div className="px-4 pb-4">
-          <Button 
-            className="w-full justify-center gap-2"
-            onClick={handleNewChat}
-            size="sm"
-          >
-            New Chat
-          </Button>
-        </div>
-        
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <Button
+              className="w-full justify-center gap-2"
+              onClick={handleNewChat}
+              size="sm"
+            >
+              New Chat
+            </Button>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         {/* Search Bar */}
-        <ChatSearch 
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
+        <ChatSearch searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       </SidebarHeader>
-      
+
       <SidebarContent className="gap-0 overflow-hidden">
         {/* All Chats Section */}
         <SidebarGroup>
-          <SidebarGroupContent className="px-2 overflow-hidden">
-            <ChatThreads 
+          <SidebarGroupLabel>Recent Chats</SidebarGroupLabel>
+          <SidebarGroupContent className="overflow-hidden">
+            <ChatThreads
               threads={filteredChats}
               onChatSelect={handleChatSelect}
+              onChatDelete={handleChatDelete}
               isLoading={isLoading}
               error={error}
             />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      
-      <SidebarFooter className="border-t">
+
+      <SidebarFooter>
         {session ? (
           <SidebarMenu>
             <SidebarMenuItem>
@@ -217,14 +289,14 @@ export function AppSidebar() {
                         <User2 className="h-4 w-4" />
                       </AvatarFallback>
                     </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
+                    <SidebarGroupContent className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">
                         {session.user?.name ?? session.user?.email ?? "User"}
                       </span>
-                      <span className="truncate text-xs text-muted-foreground">
+                      <span className="text-muted-foreground truncate text-xs">
                         Free
                       </span>
-                    </div>
+                    </SidebarGroupContent>
                     <ChevronUp className="ml-auto size-4" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
@@ -253,7 +325,7 @@ export function AppSidebar() {
         ) : (
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 size="lg"
                 onClick={() => router.push("/login")}
               >

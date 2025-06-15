@@ -6,7 +6,7 @@ import { randomBytes } from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
-    const { chatId, title, description, isPublic } = await request.json();
+    const { chatId, title, description, isPublic } = await request.json() as { chatId: string, title: string, description: string, isPublic: boolean };
 
     if (!chatId || !title) {
       return NextResponse.json(
@@ -39,18 +39,18 @@ export async function POST(request: NextRequest) {
         chatId,
         shareToken,
         title,
-        description: description || '',
+        description: description ?? '',
         isPublic: isPublic ?? true,
       })
       .returning();
 
     return NextResponse.json({
-      id: newShare.id,
-      shareToken: newShare.shareToken,
-      title: newShare.title,
-      description: newShare.description,
-      isPublic: newShare.isPublic,
-      createdAt: newShare.createdAt,
+      id: newShare?.id,
+      shareToken: newShare?.shareToken,
+      title: newShare?.title,
+      description: newShare?.description,
+      isPublic: newShare?.isPublic,
+      createdAt: newShare?.createdAt,
     });
   } catch (error) {
     console.error('Error creating chat share:', error);

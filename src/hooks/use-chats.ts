@@ -72,6 +72,19 @@ export function useChats(): UseChatsReturn {
     void fetchChats();
   }, [session?.user?.id]);
 
+  // Listen for custom refresh events
+  useEffect(() => {
+    const handleRefreshChats = () => {
+      void fetchChats();
+    };
+
+    window.addEventListener('refreshChats', handleRefreshChats);
+    
+    return () => {
+      window.removeEventListener('refreshChats', handleRefreshChats);
+    };
+  }, []);
+
   return {
     chats,
     isLoading,

@@ -19,6 +19,7 @@ export const env = createEnv({
     DISCORD_CLIENT_SECRET: z.string(),
     BETTER_AUTH_SECRET: z.string(),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
+    GROQ_API_KEY: z.string(),
   },
 
   /**
@@ -46,6 +47,7 @@ export const env = createEnv({
     DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+    GROQ_API_KEY: process.env.GROQ_API_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -28,10 +28,20 @@ export default async function ChatPage({ params }: ChatPageProps) {
     .where(eq(message.chatId, slug))
     .orderBy(message.createdAt);
 
+  // Cast the messages to the expected type
+  const typedMessages = messages.map(msg => ({
+    ...msg,
+    role: msg.role as "user" | "assistant"
+  }));
+
   return (
     <div className="flex h-[calc(100vh-5rem)] items-center justify-center">
       <div className="w-full max-w-4xl h-full flex flex-col">
-        <ChatInterface chatId={slug} initialMessages={messages} />
+        <ChatInterface 
+          chatId={slug} 
+          initialMessages={typedMessages} 
+          preferredModel={chatData.preferredModel ?? undefined}
+        />
       </div>
     </div>
   );

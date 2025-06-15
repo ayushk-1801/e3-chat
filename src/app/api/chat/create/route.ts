@@ -6,6 +6,8 @@ import { headers } from 'next/headers';
 interface CreateChatRequest {
   title: string;
   initialMessage?: string;
+  preferredModel?: string;
+  useSearchGrounding?: boolean;
 }
 
 export async function POST(req: Request) {
@@ -20,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json() as CreateChatRequest;
-    const { title, initialMessage } = body;
+    const { title, initialMessage, preferredModel } = body;
 
     // Validate request
     if (!title) {
@@ -31,6 +33,7 @@ export async function POST(req: Request) {
     const [newChat] = await db.insert(chat).values({
       title,
       userId: session.user.id,
+      preferredModel: preferredModel ?? "gemini-2.5-flash-preview-04-17",
     }).returning();
 
     // If an initial message is provided, save it to the database

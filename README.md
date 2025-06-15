@@ -5,7 +5,7 @@ This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3
 ## Features
 
 - **Authentication**: Social login with Google, GitHub, and Discord using Better Auth
-- **AI Chat**: Powered by Google Generative AI
+- **AI Chat**: Powered by Google Gemini and Groq (ultra-fast inference)
 - **Database**: PostgreSQL with Drizzle ORM
 - **UI**: Beautiful components using shadcn/ui
 - **Type Safety**: Full-stack TypeScript
@@ -34,8 +34,9 @@ GITHUB_CLIENT_SECRET="your-github-client-secret"
 DISCORD_CLIENT_ID="your-discord-client-id"
 DISCORD_CLIENT_SECRET="your-discord-client-secret"
 
-# AI
+# AI Providers
 GOOGLE_GENERATIVE_AI_API_KEY="your-google-ai-api-key"
+GROQ_API_KEY="your-groq-api-key"
 ```
 
 ## Authentication Setup

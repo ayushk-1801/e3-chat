@@ -14,6 +14,7 @@ import {
   SidebarGroupLabel,
   SidebarMenuAction,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -77,12 +78,14 @@ function ChatThreads({
   onChatDelete,
   isLoading,
   error,
+  sidebarOpen,
 }: {
   threads: ChatThread[];
   onChatSelect: (chatId: string) => void;
   onChatDelete: (chatId: string) => void;
   isLoading: boolean;
   error: string | null;
+  sidebarOpen: boolean;
 }) {
   if (isLoading) {
     return <ChatThreadsSkeleton count={5} />;
@@ -127,34 +130,36 @@ function ChatThreads({
             <span className="truncate text-sm">{chat.title}</span>
           </SidebarMenuButton>
 
-          {/* Delete button with confirmation dialog - shows on hover */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <SidebarMenuAction className="opacity-0 transition-opacity duration-200 group-hover/menu-item:opacity-100 hover:bg-destructive/10">
-                <Trash2 className="h-3 w-3" />
-                <span className="sr-only">Delete chat</span>
-              </SidebarMenuAction>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Chat</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete &ldquo;{chat.title}&rdquo;?
-                  This action cannot be undone and will permanently delete the
-                  chat and all its messages.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className=""
-                  onClick={() => onChatDelete(chat.id)}
-                >
-                  Delete Chat
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {/* Delete button with confirmation dialog - shows on hover only when sidebar is open */}
+          {sidebarOpen && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <SidebarMenuAction className="opacity-0 transition-opacity duration-200 group-hover/menu-item:opacity-100 hover:bg-destructive/10">
+                  <Trash2 className="h-3 w-3" />
+                  <span className="sr-only">Delete chat</span>
+                </SidebarMenuAction>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Chat</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete &ldquo;{chat.title}&rdquo;?
+                    This action cannot be undone and will permanently delete the
+                    chat and all its messages.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className=""
+                    onClick={() => onChatDelete(chat.id)}
+                  >
+                    Delete Chat
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </SidebarMenuItem>
       ))}
     </SidebarMenu>
@@ -189,6 +194,7 @@ export function AppSidebar() {
   const router = useRouter();
   const { chats, isLoading, error, refetch, deleteChat } = useChats();
   const [searchQuery, setSearchQuery] = useState("");
+  const { state } = useSidebar();
 
   // Filter chats based on search query
   const filteredChats = chats.filter((chat) =>
@@ -265,6 +271,7 @@ export function AppSidebar() {
               onChatDelete={handleChatDelete}
               isLoading={isLoading}
               error={error}
+              sidebarOpen={state === "expanded"}
             />
           </SidebarGroupContent>
         </SidebarGroup>

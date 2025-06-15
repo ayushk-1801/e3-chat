@@ -492,7 +492,7 @@ function CodeBlock({ children, className }: CodeBlockProps) {
             size="sm"
             onClick={copyToClipboard}
             className={`hover:bg-accent hover:text-accent-foreground h-7 w-7 rounded p-0 transition-colors ${
-              isCopied ? "text-green-500" : "text-muted-foreground"
+              isCopied ? "" : "text-muted-foreground"
             }`}
             title={isCopied ? "Copied!" : "Copy code"}
           >

@@ -3,6 +3,7 @@
 
 import { pgTableCreator } from "drizzle-orm/pg-core";
 import { pgTable, text, timestamp, boolean, uuid, integer } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -66,6 +67,7 @@ export const chat = pgTable("chat", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+  preferredModel: text("preferred_model").default("gemini-2.5-flash-preview-04-17"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -78,6 +80,38 @@ export const message = pgTable("message", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Share-related tables
+export const chatShare = pgTable("chat_share", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  chatId: uuid("chat_id").notNull().references(() => chat.id, { onDelete: "cascade" }),
+  shareToken: text("share_token").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description"),
+  isPublic: boolean("is_public").notNull().default(true),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Relations
+export const chatRelations = relations(chat, ({ many, one }) => ({
+  messages: many(message),
+  shares: many(chatShare),
+  user: one(user, { fields: [chat.userId], references: [user.id] }),
+}));
+
+export const messageRelations = relations(message, ({ one }) => ({
+  chat: one(chat, { fields: [message.chatId], references: [chat.id] }),
+}));
+
+export const chatShareRelations = relations(chatShare, ({ one }) => ({
+  chat: one(chat, { fields: [chatShare.chatId], references: [chat.id] }),
+}));
+
+export const userRelations = relations(user, ({ many }) => ({
+  chats: many(chat),
+}));
+
 export const schema = {
   user,
   session,
@@ -85,4 +119,5 @@ export const schema = {
   verification,
   chat,
   message,
+  chatShare,
 };

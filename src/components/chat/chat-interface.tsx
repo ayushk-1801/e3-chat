@@ -6,15 +6,33 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { useSidebar } from "@/components/ui/sidebar";
 import { MessageLoading } from "@/components/ui/message-loading";
-import { ArrowUp, Search, Paperclip, Globe, CornerRightUp } from "lucide-react";
-import { useEffect, useRef } from "react";
+import {
+  ArrowUp,
+  Search,
+  Paperclip,
+  Globe,
+  CornerRightUp,
+  Sparkles,
+  Zap,
+  Brain,
+  Bot,
+  Cpu,
+  Copy,
+  Check,
+  ExternalLink,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { MarkdownMessage } from "./markdown-message";
 import { MessageNavigation } from "./message-navigation";
 
@@ -29,25 +47,48 @@ interface ChatMessage {
 interface ChatInterfaceProps {
   chatId: string;
   initialMessages: ChatMessage[];
+  preferredModel?: string;
 }
 
-export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
+export function ChatInterface({ chatId, initialMessages, preferredModel }: ChatInterfaceProps) {
   const { state, isMobile } = useSidebar();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get("initialMessage");
   const hasProcessedInitialMessage = useRef(false);
+  const [selectedModel, setSelectedModel] = useState(
+    preferredModel ?? "gemini-2.5-flash-preview-04-17",
+  );
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [useSearchGrounding, setUseSearchGrounding] = useState(false);
+
+  // Model display names for the trigger
+  const modelDisplayNames: Record<string, string> = {
+    "gemini-2.5-pro-preview-05-06": "Gemini 2.5 Pro Preview",
+    "gemini-2.5-flash-preview-04-17": "Gemini 2.5 Flash Preview",
+    "gemini-2.5-pro-exp-03-25": "Gemini 2.5 Pro Experimental",
+    "gemini-2.0-flash": "Gemini 2.0 Flash",
+    "meta-llama/llama-4-scout-17b-16e-instruct": "Llama 4 Scout 17B",
+    "llama-3.3-70b-versatile": "Llama 3.3 70B",
+    "llama-3.1-8b-instant": "Llama 3.1 8B Instant",
+
+    "mixtral-8x7b-32768": "Mixtral 8x7B",
+    "mistral-saba-24b": "Mistral Saba 24B",
+    "gemma2-9b-it": "Gemma 2 9B",
+    "qwen-qwq-32b": "Qwen QwQ 32B",
+
+    "deepseek-r1-distill-llama-70b": "DeepSeek R1 Distill Llama 70B",
+  };
 
   // For new chats with only one user message, don't use initialMessages
   // Instead, we'll append it through useChat to trigger the proper response flow
   const shouldUseInitialMessages = !(
-    initialMessages.length === 1 && 
-    initialMessages[0]?.role === "user"
+    initialMessages.length === 1 && initialMessages[0]?.role === "user"
   );
 
   // Transform initial messages to the format expected by useChat
-  const transformedMessages = shouldUseInitialMessages 
+  const transformedMessages = shouldUseInitialMessages
     ? initialMessages.map((msg) => ({
         id: msg.id,
         role: msg.role,
@@ -65,7 +106,11 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
   } = useChat({
     api: "/api/chat",
     initialMessages: transformedMessages,
-    body: { chatId },
+    body: { 
+      chatId, 
+      selectedModel,
+      useSearchGrounding: useSearchGrounding && selectedModel.startsWith("gemini")
+    },
     onFinish: (message) => {
       // Save the assistant message to the database
       fetch("/api/chat/save-message", {
@@ -107,7 +152,7 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
     ) {
       // Mark as processed to prevent re-triggering
       hasProcessedInitialMessage.current = true;
-      
+
       // Append the initial message through useChat to trigger the response flow
       void append({
         role: "user",
@@ -116,13 +161,20 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
     }
   }, [shouldUseInitialMessages, initialMessages, messages.length, append]);
 
+  // Reset search grounding when switching to non-Gemini models
+  useEffect(() => {
+    if (!selectedModel.startsWith("gemini") && useSearchGrounding) {
+      setUseSearchGrounding(false);
+    }
+  }, [selectedModel, useSearchGrounding]);
+
   // Function to scroll to a specific message
   const scrollToMessage = (messageId: string) => {
     const messageElement = messageRefs.current.get(messageId);
     if (messageElement) {
-      messageElement.scrollIntoView({ 
-        behavior: "smooth", 
-        block: "center" 
+      messageElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
       });
       // Add a highlight effect
       messageElement.classList.add("bg-accent/20");
@@ -132,41 +184,90 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
     }
   };
 
+  // Function to copy message content
+  const copyMessage = async (content: string, messageId: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      toast.success("Message copied to clipboard");
+
+      // Reset the copied state after 2 seconds
+      setTimeout(() => {
+        setCopiedMessageId(null);
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy message:", err);
+      toast.error("Failed to copy message");
+    }
+  };
+
+  // Function to toggle search grounding
+  const toggleSearchGrounding = () => {
+    if (selectedModel.startsWith("gemini")) {
+      setUseSearchGrounding(!useSearchGrounding);
+      toast.success(
+        `Search grounding ${!useSearchGrounding ? "enabled" : "disabled"}`
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Message Navigation */}
-      <MessageNavigation 
-        messages={messages}
-        onMessageClick={scrollToMessage}
-      />
-      
+      <MessageNavigation messages={messages} onMessageClick={scrollToMessage} />
+
+
+
       {/* Messages Area */}
       <div
-        className={`max-w-3xl space-y-4 p-4 pb-32 transition-all duration-200 min-h-screen ${
+        className={`min-h-screen max-w-3xl space-y-8 p-4 pb-32 transition-all duration-200 ${
           state === "expanded" && !isMobile ? "mx-auto" : "mx-auto"
         }`}
       >
         {messages.map((message) => (
-          <div
-            key={message.id}
-            ref={(el) => { messageRefs.current.set(message.id, el); }}
-            className={`flex transition-colors duration-500 ${
-              message.role === "user" ? "justify-end" : "justify-start"
-            }`}
-          >
+          <div key={message.id}>
             <div
-              className={`max-w-[80%] rounded-lg p-3 ${
-                message.role === "user"
-                  ? "bg-muted text-muted-foreground"
-                  : "max-w-full"
+              ref={(el) => {
+                messageRefs.current.set(message.id, el);
+              }}
+              className={`flex transition-colors duration-500 ${
+                message.role === "user" ? "justify-end" : "justify-start"
               }`}
             >
-              {message.role === "user" ? (
-                <div className="whitespace-pre-wrap">{message.content}</div>
-              ) : (
-                <MarkdownMessage content={message.content} />
-              )}
+              <div
+                className={`group relative max-w-[80%] rounded-lg p-3 ${
+                  message.role === "user"
+                    ? "bg-muted text-muted-foreground"
+                    : "max-w-full"
+                }`}
+              >
+                {message.role === "user" ? (
+                  <div className="whitespace-pre-wrap">{message.content}</div>
+                ) : (
+                  <MarkdownMessage content={message.content} />
+                )}
+
+                {/* Copy Button - Bottom left for assistant, bottom right for user */}
+                <Button
+                  onClick={() => copyMessage(message.content, message.id)}
+                  variant="ghost"
+                  size="sm"
+                  className={`bg-background/80 hover:bg-background border-border/50 absolute h-6 w-6 border p-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${
+                    message.role === "user"
+                      ? "right-0 -bottom-8"
+                      : "bottom-0 left-2"
+                  }`}
+                >
+                  {copiedMessageId === message.id ? (
+                    <Check className="h-3 w-3" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
             </div>
+
+
           </div>
         ))}
         {isLoading && (
@@ -186,6 +287,18 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
             state === "expanded" && !isMobile ? "mx-auto" : "mx-auto"
           }`}
         >
+          {/* Search Grounding Indicator - Above Chat Box */}
+          {useSearchGrounding && selectedModel.startsWith("gemini") && (
+            <div className="mb-0 animate-in slide-in-from-bottom-2 duration-300 ease-out -z-10">
+              <div className="mx-auto max-w-2xl">
+                <div className="flex items-center gap-2 rounded-t-lg bg-sidebar px-3 py-2 text-sm text-sidebar-foreground border border-sidebar-border">
+                  <Globe className="h-4 w-4" />
+                  <span>Search grounding enabled - responses will include web search results</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div
             className={`bg-background border-border flex w-full flex-col rounded-t-2xl border-t border-r border-l px-1.5 pt-1.5 transition-all duration-200 ease-linear`}
           >
@@ -205,29 +318,309 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   {/* Model Selector */}
-                  <Select defaultValue="gemini-2.0-flash">
+                  <Select
+                    value={selectedModel}
+                    onValueChange={setSelectedModel}
+                  >
                     <SelectTrigger className="ml-1 w-auto border-none bg-transparent dark:bg-transparent">
                       <div className="flex items-center space-x-2">
-                        <SelectValue />
+                        <span className="text-sm font-medium">
+                          {modelDisplayNames[selectedModel] ?? selectedModel}
+                        </span>
                       </div>
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gemini-2.0-flash">
-                        Gemini 2.0 Flash
-                      </SelectItem>
-                      <SelectItem value="gemini-pro">Gemini Pro</SelectItem>
-                      <SelectItem value="gpt-4">GPT-4</SelectItem>
+                    <SelectContent className="max-h-96 w-80 overflow-y-auto">
+                      <SelectGroup>
+                        <SelectLabel className="text-muted-foreground flex items-center gap-2 px-2 py-1.5 text-xs font-medium">
+                          <Sparkles className="h-3 w-3" />
+                          Google Gemini
+                        </SelectLabel>
+                        <SelectItem
+                          value="gemini-2.5-pro-preview-05-06"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/gemini.svg"
+                                alt="Gemini"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Gemini 2.5 Pro Preview
+                              </span>
+                              <span className="text-muted-foreground text-xs">
+                                Most capable preview
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem
+                          value="gemini-2.5-flash-preview-04-17"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/gemini.svg"
+                                alt="Gemini"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Gemini 2.5 Flash Preview
+                              </span>
+                              <span className="text-muted-foreground text-xs">
+                                Latest & fastest preview
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem
+                          value="gemini-2.5-pro-exp-03-25"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/gemini.svg"
+                                alt="Gemini"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Gemini 2.5 Pro Experimental
+                              </span>
+                              <span className="text-muted-foreground text-xs">
+                                Experimental features
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem
+                          value="gemini-2.0-flash"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/gemini.svg"
+                                alt="Gemini"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Gemini 2.0 Flash
+                              </span>
+                              <span className="text-muted-foreground text-xs">
+                                Reliable & proven
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      </SelectGroup>
+                      <SelectSeparator />
+                      <SelectGroup>
+                        <SelectLabel className="text-muted-foreground flex items-center gap-2 px-2 py-1.5 text-xs font-medium">
+                          <Zap className="h-3 w-3" />
+                          Groq
+                        </SelectLabel>
+                        <SelectItem
+                          value="meta-llama/llama-4-scout-17b-16e-instruct"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/meta.svg"
+                                alt="Meta"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Llama 4 Scout 17B
+                              </span>
+                              <span className="text-muted-foreground text-xs">
+                                Latest Llama 4 preview
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem
+                          value="llama-3.3-70b-versatile"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/meta.svg"
+                                alt="Meta"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">Llama 3.3 70B</span>
+                              <span className="text-muted-foreground text-xs">
+                                Most capable Llama
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem
+                          value="llama-3.1-8b-instant"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/meta.svg"
+                                alt="Meta"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Llama 3.1 8B Instant
+                              </span>
+                              <span className="text-muted-foreground text-xs">
+                                Lightning fast
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+
+
+
+                        <SelectItem
+                          value="mixtral-8x7b-32768"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/mistral.svg"
+                                alt="Mistral"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">Mixtral 8x7B</span>
+                              <span className="text-muted-foreground text-xs">
+                                Mixture of experts
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem
+                          value="mistral-saba-24b"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/mistral.svg"
+                                alt="Mistral"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                Mistral Saba 24B
+                              </span>
+                              <span className="text-muted-foreground text-xs">
+                                Advanced reasoning
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem
+                          value="gemma2-9b-it"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/gemini.svg"
+                                alt="Google"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">Gemma 2 9B</span>
+                              <span className="text-muted-foreground text-xs">
+                                Google&apos;s open model
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem
+                          value="qwen-qwq-32b"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/qwen.svg"
+                                alt="Qwen"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">Qwen QwQ 32B</span>
+                              <span className="text-muted-foreground text-xs">
+                                Reasoning specialist
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+
+
+                        <SelectItem
+                          value="deepseek-r1-distill-llama-70b"
+                          className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                          <div className="flex w-full items-center gap-3">
+                            <div className="flex h-6 w-6 items-center justify-center rounded">
+                              <img
+                                src="/icons/deepseek.svg"
+                                alt="DeepSeek"
+                                className="h-6 w-6 text-white"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                DeepSeek R1 Distill Llama 70B
+                              </span>
+                              <span className="text-muted-foreground text-xs">
+                                Large reasoning model
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
 
                   {/* Search Button */}
                   <Button
-                    variant="outline"
+                    variant={useSearchGrounding && selectedModel.startsWith("gemini") ? "default" : "outline"}
                     size="sm"
-                    className="rounded-full bg-transparent dark:bg-transparent"
+                    disabled={!selectedModel.startsWith("gemini")}
+                    className={`rounded-full ${
+                      useSearchGrounding && selectedModel.startsWith("gemini")
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : "bg-transparent dark:bg-transparent"
+                    }`}
+                    onClick={toggleSearchGrounding}
                   >
                     <Globe className="mr-1 h-4 w-4" />
-                    Search
+                    {useSearchGrounding && selectedModel.startsWith("gemini") ? "Search" : "Search"}
                   </Button>
 
                   {/* Attachment Button */}

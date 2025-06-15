@@ -1,5 +1,6 @@
 import { google } from '@ai-sdk/google';
 import { groq } from '@ai-sdk/groq';
+import { ollama } from 'ollama-ai-provider';
 import { streamText } from 'ai';
 import { db } from '@/server/db';
 import { chat, message } from '@/server/db/schema';
@@ -65,6 +66,74 @@ const getModelProvider = (modelId: string, useSearchGrounding = false) => {
     case 'deepseek-r1-distill-llama-70b':
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       return groq('deepseek-r1-distill-llama-70b');
+    
+    // Ollama models (local inference)
+    case 'llama3.2':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('llama3.2');
+    case 'llama3.2:3b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('llama3.2:3b');
+    case 'llama3.1':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('llama3.1');
+    case 'llama3.1:8b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('llama3.1:8b');
+    case 'llama3.1:70b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('llama3.1:70b');
+    case 'phi3':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('phi3');
+    case 'phi3:3.8b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('phi3:3.8b');
+    case 'phi3:14b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('phi3:14b');
+    case 'mistral':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('mistral');
+    case 'mistral:7b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('mistral:7b');
+    case 'codellama':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('codellama');
+    case 'codellama:7b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('codellama:7b');
+    case 'codellama:13b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('codellama:13b');
+    case 'gemma2':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('gemma2');
+    case 'gemma2:2b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('gemma2:2b');
+    case 'gemma2:9b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('gemma2:9b');
+    case 'qwen2.5':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('qwen2.5');
+    case 'qwen2.5:7b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('qwen2.5:7b');
+    case 'qwen2.5:14b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('qwen2.5:14b');
+    case 'qwen3:0.6b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('qwen3:0.6b');
+    case 'deepseek-coder':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('deepseek-coder');
+    case 'deepseek-coder:6.7b':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return ollama('deepseek-coder:6.7b');
     
     // Default to latest Gemini with search options
     default:

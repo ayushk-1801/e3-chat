@@ -57,6 +57,30 @@ export function ChatBox() {
     "qwen-qwq-32b": "Qwen QwQ 32B",
 
     "deepseek-r1-distill-llama-70b": "DeepSeek R1 Distill Llama 70B",
+
+    // Ollama models
+    "llama3.2": "Llama 3.2 (Latest)",
+    "llama3.2:3b": "Llama 3.2 3B",
+    "llama3.1": "Llama 3.1 (Latest)",
+    "llama3.1:8b": "Llama 3.1 8B",
+    "llama3.1:70b": "Llama 3.1 70B",
+    "phi3": "Phi-3 (Latest)",
+    "phi3:3.8b": "Phi-3 3.8B",
+    "phi3:14b": "Phi-3 14B",
+    "mistral": "Mistral (Latest)",
+    "mistral:7b": "Mistral 7B",
+    "codellama": "CodeLlama (Latest)",
+    "codellama:7b": "CodeLlama 7B",
+    "codellama:13b": "CodeLlama 13B",
+    "gemma2": "Gemma 2 (Latest)",
+    "gemma2:2b": "Gemma 2 2B",
+    "gemma2:9b": "Gemma 2 9B",
+    "qwen2.5": "Qwen 2.5 (Latest)",
+    "qwen2.5:7b": "Qwen 2.5 7B",
+    "qwen2.5:14b": "Qwen 2.5 14B",
+    "qwen3:0.6b": "Qwen 3 0.6B",
+    "deepseek-coder": "DeepSeek Coder (Latest)",
+    "deepseek-coder:6.7b": "DeepSeek Coder 6.7B",
   };
   const { state, isMobile } = useSidebar();
   const router = useRouter();
@@ -316,6 +340,123 @@ export function ChatBox() {
                       <div className="flex flex-col">
                         <span className="font-medium">DeepSeek R1 Distill Llama 70B</span>
                         <span className="text-xs text-muted-foreground">Large reasoning model</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                </SelectGroup>
+                <SelectSeparator />
+                <SelectGroup>
+                  <SelectLabel className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                    <img src="/icons/ollama.svg" alt="Ollama" className="h-3 w-3" />
+                    Ollama (Local)
+                  </SelectLabel>
+                  <SelectItem value="llama3.2" className="flex items-center gap-3 px-3 py-2.5">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex h-6 w-6 items-center justify-center rounded">
+                        <img src="/icons/meta.svg" alt="Meta" className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">Llama 3.2 (Latest)</span>
+                        <span className="text-xs text-muted-foreground">Local inference</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="llama3.2:3b" className="flex items-center gap-3 px-3 py-2.5">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex h-6 w-6 items-center justify-center rounded">
+                        <img src="/icons/meta.svg" alt="Meta" className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">Llama 3.2 3B</span>
+                        <span className="text-xs text-muted-foreground">Small & fast</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="llama3.1:8b" className="flex items-center gap-3 px-3 py-2.5">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex h-6 w-6 items-center justify-center rounded">
+                        <img src="/icons/meta.svg" alt="Meta" className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">Llama 3.1 8B</span>
+                        <span className="text-xs text-muted-foreground">Balanced performance</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="llama3.1:70b" className="flex items-center gap-3 px-3 py-2.5">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex h-6 w-6 items-center justify-center rounded">
+                        <img src="/icons/meta.svg" alt="Meta" className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">Llama 3.1 70B</span>
+                        <span className="text-xs text-muted-foreground">High capability</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="phi3" className="flex items-center gap-3 px-3 py-2.5">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex h-6 w-6 items-center justify-center rounded">
+                        <img src="/icons/microsoft.svg" alt="Microsoft" className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">Phi-3 (Latest)</span>
+                        <span className="text-xs text-muted-foreground">Microsoft&apos;s SLM</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="mistral:7b" className="flex items-center gap-3 px-3 py-2.5">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex h-6 w-6 items-center justify-center rounded">
+                        <img src="/icons/mistral.svg" alt="Mistral" className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">Mistral 7B</span>
+                        <span className="text-xs text-muted-foreground">Efficient & capable</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="codellama" className="flex items-center gap-3 px-3 py-2.5">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex h-6 w-6 items-center justify-center rounded">
+                        <img src="/icons/meta.svg" alt="Meta" className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">CodeLlama</span>
+                        <span className="text-xs text-muted-foreground">Code generation</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="qwen3:0.6b" className="flex items-center gap-3 px-3 py-2.5">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex h-6 w-6 items-center justify-center rounded">
+                        <img src="/icons/qwen.svg" alt="Qwen" className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">Qwen 3 0.6B</span>
+                        <span className="text-xs text-muted-foreground">Ultra lightweight</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="qwen2.5:7b" className="flex items-center gap-3 px-3 py-2.5">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex h-6 w-6 items-center justify-center rounded">
+                        <img src="/icons/qwen.svg" alt="Qwen" className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">Qwen 2.5 7B</span>
+                        <span className="text-xs text-muted-foreground">Alibaba&apos;s model</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="deepseek-coder" className="flex items-center gap-3 px-3 py-2.5">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex h-6 w-6 items-center justify-center rounded">
+                        <img src="/icons/deepseek.svg" alt="DeepSeek" className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">DeepSeek Coder</span>
+                        <span className="text-xs text-muted-foreground">Advanced code model</span>
                       </div>
                     </div>
                   </SelectItem>

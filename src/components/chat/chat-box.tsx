@@ -30,6 +30,7 @@ import {
   Cpu,
 } from "lucide-react";
 import GlowButton from "../ui/glow-button";
+import { useSession } from "@/lib/auth-client";
 
 interface CreateChatResponse {
   chatId: string;
@@ -40,6 +41,9 @@ export function ChatBox() {
   const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash-preview-04-17");
   const [isLoading, setIsLoading] = useState(false);
   const [useSearchGrounding, setUseSearchGrounding] = useState(false);
+  
+  // Add authentication check
+  const { data: session } = useSession();
 
   // Model display names for the trigger
   const modelDisplayNames: Record<string, string> = {
@@ -86,6 +90,17 @@ export function ChatBox() {
   const router = useRouter();
 
   const handleSend = async () => {
+    // Check authentication before allowing send
+    if (!session) {
+      toast.error("Please sign in to start chatting", {
+        action: {
+          label: "Sign In",
+          onClick: () => router.push("/login"),
+        },
+      });
+      return;
+    }
+
     if (message.trim() && !isLoading) {
       setIsLoading(true);
       try {
@@ -123,6 +138,16 @@ export function ChatBox() {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      // Check authentication before allowing send
+      if (!session) {
+        toast.error("Please sign in to start chatting", {
+          action: {
+            label: "Sign In",
+            onClick: () => router.push("/login"),
+          },
+        });
+        return;
+      }
       void handleSend();
     }
   };

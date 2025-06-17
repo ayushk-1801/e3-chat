@@ -1,11 +1,26 @@
 # E3 Chat
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app` with Better Auth integration for social authentication.
+This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app` with [Better Auth](https://github.com/better-auth/better-auth) integration for social authentication.
 
 ## Features
 
 - **Authentication**: Social login with Google, GitHub, and Discord using Better Auth
-- **AI Chat**: Powered by Google Gemini and Groq (ultra-fast inference)
+- **AI Chat**: Multiple AI providers for diverse model selection
+  - **Google Gemini**: Latest models with search grounding capabilities
+  - **Groq**: Ultra-fast inference with Llama, Mixtral, and other models
+  - **Ollama**: Run models locally for privacy and offline usage
+- **Search Grounding**: Real-time web search integration (Gemini models only)
+- **Multiple AI Models**: Choose from 25+ models across different providers
+  - Google Gemini 2.5 Pro/Flash, Gemini 2.0 Flash
+  - Meta Llama 4 Scout, Llama 3.3 70B, Llama 3.1 variants
+  - Mixtral 8x7B, Mistral models
+  - Microsoft Phi-3 models
+  - Qwen, DeepSeek, and specialized code models
+- **Local AI Models**: Privacy-focused local inference with Ollama
+  - Llama 3.2/3.1 (3B, 8B, 70B variants)
+  - CodeLlama for code generation
+  - Phi-3, Mistral, Gemma 2, Qwen 2.5
+  - DeepSeek Coder for advanced coding tasks
 - **Database**: PostgreSQL with Drizzle ORM
 - **UI**: Beautiful components using shadcn/ui
 - **Type Safety**: Full-stack TypeScript
@@ -77,6 +92,20 @@ npm run db:push
 3. Start the development server:
 ```bash
 npm run dev
+```
+
+4. (Optional) Set up Ollama for local models:
+```bash
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Start Ollama service
+ollama serve
+
+# Pull some models (examples)
+ollama pull llama3.2:3b
+ollama pull phi3
+ollama pull codellama:7b
 ```
 
 ## What's next? How do I make an app with this?
